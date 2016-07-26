@@ -250,22 +250,28 @@ function DragNDropTemplates(url_name) {
                         renderCollection(itemTemplate, items_in_bank, ctx)
                     ),
                     h('div.target',
-                        {
-                            attributes: {
-                                'aria-live': 'polite',
-                                'aria-atomic': 'true',
-                                'aria-relevant': 'additions',
-                            },
-                        },
+                        {},
                         [
                             h(
-                                popupSelector,
+                                "div.popup-wrapper",
                                 {
-                                    style: {display: ctx.popup_html ? 'block' : 'none'},
+                                    attributes: {
+                                        'aria-live': 'polite',
+                                        'aria-atomic': 'true',
+                                        'aria-relevant': 'additions',
+                                    }
                                 },
                                 [
-                                    h('div.close.icon-remove-sign.fa-times-circle'),
-                                    h('p.popup-content', {innerHTML: ctx.popup_html}),
+                                    h(
+                                        popupSelector,
+                                        {
+                                            style: {display: ctx.popup_html ? 'block' : 'none'},
+                                        },
+                                        [
+                                            h('div.close.icon-remove-sign.fa-times-circle'),
+                                            h('p.popup-content', {innerHTML: ctx.popup_html}),
+                                        ]
+                                    )
                                 ]
                             ),
                             h('div.target-img-wrapper', [

@@ -67,6 +67,9 @@ class BaseIntegrationTest(SeleniumBaseTest):
     def _get_popup(self):
         return self._page.find_element_by_css_selector(".popup")
 
+    def _get_popup_wrapper(self):
+        return self._page.find_element_by_css_selector(".popup-wrapper")
+
     def _get_popup_content(self):
         return self._page.find_element_by_css_selector(".popup .popup-content")
 
