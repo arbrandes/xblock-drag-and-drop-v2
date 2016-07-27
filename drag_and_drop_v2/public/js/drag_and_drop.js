@@ -179,18 +179,55 @@ function DragNDropTemplates(url_name) {
     var feedbackTemplate = function(ctx) {
         var feedback_display = ctx.feedback_html ? 'block' : 'none';
         var reset_button_display = ctx.display_reset_button ? 'block' : 'none';
-        var properties = { attributes: { 'aria-live': 'polite' } };
         return (
-            h('section.feedback', properties, [
+            h('section.feedback', {}, [
                 h(
                     'button.reset-button.unbutton.link-button',
-                    { style: { display: reset_button_display }, attributes: { tabindex: 0 }, 'aria-live': 'off'},
+                    { style: { display: reset_button_display }, attributes: { tabindex: 0, 'aria-live': 'off' } },
                     gettext('Reset problem')
                 ),
-                h('h3.title1', { style: { display: feedback_display } }, gettext('Feedback')),
-                h('p.message', { style: { display: feedback_display }, innerHTML: ctx.feedback_html })
+                h(
+                    "div.feedback-content",
+                    { attributes: { 'aria-live': 'polite' } },
+                    [
+                        h('h3.title1', { style: { display: feedback_display } }, gettext('Feedback')),
+                        h('p.message', { style: { display: feedback_display }, innerHTML: ctx.feedback_html })
+                    ]
+                )
             ])
         );
+    };
+
+    var popupTemplate = function(ctx) {
+        var popupSelector = 'div.popup';
+        if (ctx.popup_html && !ctx.last_action_correct) {
+            popupSelector += '.popup-incorrect';
+        }
+
+        return (
+            h(
+                "div.popup-wrapper",
+                {
+                    attributes: {
+                        'aria-live': 'polite',
+                        'aria-atomic': 'true',
+                        'aria-relevant': 'additions',
+                    }
+                },
+                [
+                    h(
+                        popupSelector,
+                        {
+                            style: {display: ctx.popup_html ? 'block' : 'none'},
+                        },
+                        [
+                            h('div.close.icon-remove-sign.fa-times-circle'),
+                            h('p.popup-content', {innerHTML: ctx.popup_html}),
+                        ]
+                    )
+                ]
+            )
+        )
     };
 
     var keyboardHelpTemplate = function(ctx) {
@@ -226,10 +263,7 @@ function DragNDropTemplates(url_name) {
     var mainTemplate = function(ctx) {
         var problemTitle = ctx.show_title ? h('h2.problem-title', {innerHTML: ctx.title_html}) : null;
         var problemHeader = ctx.show_problem_header ? h('h3.title1', gettext('Problem')) : null;
-        var popupSelector = 'div.popup';
-        if (ctx.popup_html && !ctx.last_action_correct) {
-            popupSelector += '.popup-incorrect';
-        }
+
         // Render only items_in_bank and items_placed_unaligned here;
         // items placed in aligned zones will be rendered by zoneTemplate.
         var is_item_placed = function(i) { return i.is_placed; };
@@ -252,28 +286,7 @@ function DragNDropTemplates(url_name) {
                     h('div.target',
                         {},
                         [
-                            h(
-                                "div.popup-wrapper",
-                                {
-                                    attributes: {
-                                        'aria-live': 'polite',
-                                        'aria-atomic': 'true',
-                                        'aria-relevant': 'additions',
-                                    }
-                                },
-                                [
-                                    h(
-                                        popupSelector,
-                                        {
-                                            style: {display: ctx.popup_html ? 'block' : 'none'},
-                                        },
-                                        [
-                                            h('div.close.icon-remove-sign.fa-times-circle'),
-                                            h('p.popup-content', {innerHTML: ctx.popup_html}),
-                                        ]
-                                    )
-                                ]
-                            ),
+                            popupTemplate(ctx),
                             h('div.target-img-wrapper', [
                                 h('img.target-img', {src: ctx.target_img_src, alt: ctx.target_img_description}),
                             ]
@@ -852,6 +865,16 @@ function DragAndDropBlock(runtime, element, configuration) {
             return itemProperties;
         });
 
+        var display_reset_button = false;
+        for (var key in state.items) {
+            if (state.items.hasOwnProperty(key)) {
+                if (!state.items[key].submitting_location) {
+                    display_reset_button = true;
+                    break;
+                }
+            }
+        }
+
         var context = {
             // configuration - parts that never change:
             bg_image_width: bgImgNaturalWidth, // Not stored in configuration since it's unknown on the server side
@@ -869,7 +892,7 @@ function DragAndDropBlock(runtime, element, configuration) {
             last_action_correct: state.last_action_correct,
             popup_html: state.feedback || '',
             feedback_html: $.trim(state.overall_feedback),
-            display_reset_button: Object.keys(state.items).length > 0,
+            display_reset_button: display_reset_button,
         };
 
         return DragAndDropBlock.renderView(context);

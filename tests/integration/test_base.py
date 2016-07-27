@@ -86,7 +86,7 @@ class BaseIntegrationTest(SeleniumBaseTest):
         return self._page.find_element_by_css_selector('.reset-button')
 
     def _get_feedback(self):
-        return self._page.find_element_by_css_selector(".feedback")
+        return self._page.find_element_by_css_selector(".feedback-content")
 
     def _get_feedback_message(self):
         return self._page.find_element_by_css_selector(".feedback .message")
