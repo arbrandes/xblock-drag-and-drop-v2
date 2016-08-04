@@ -6,6 +6,7 @@
 import json
 import webob
 import copy
+import uuid
 import urllib
 
 from xblock.core import XBlock
@@ -215,6 +216,12 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         """
 
         js_templates = loader.load_unicode('/templates/html/js_templates.html')
+        # A short random string to append to HTML element ID attributes to avoid multiple instances
+        # of the DnDv2 block on the same page sharing the same ID values.
+        # We avoid using ID attributes in preference to classes, but sometimes we still need IDs to
+        # connect 'for' and 'aria-describedby' attributes to the associated elements.
+        id_suffix = uuid.uuid4().hex[:16]
+        js_templates = js_templates.replace('{{id_suffix}}', id_suffix)
         help_texts = {
             field_name: self.ugettext(field.help)
             for field_name, field in self.fields.viewitems() if hasattr(field, "help")
@@ -227,6 +234,7 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
             'js_templates': js_templates,
             'help_texts': help_texts,
             'field_values': field_values,
+            'id_suffix': id_suffix,
             'self': self,
             'data': urllib.quote(json.dumps(self.data)),
         }
