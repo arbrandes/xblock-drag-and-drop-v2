@@ -695,6 +695,14 @@ function DragAndDropBlock(runtime, element, configuration) {
         var zone_id = $zone.data('zone_id');
         var zone_align = $zone.data('zone_align');
 
+        var items_in_zone_count = countItemsInZone(zone);
+        if (configuration.max_items_per_zone && configuration.max_items_per_zone <= items_in_zone_count) {
+            state.last_action_correct = false;
+            state.feedback = gettext("This zone already contains maximum allowed number of items or more");
+            applyState();
+            return;
+        }
+
         state.items[item_id] = {
             zone: zone,
             zone_align: zone_align,
@@ -705,6 +713,18 @@ function DragAndDropBlock(runtime, element, configuration) {
             applyState();
             submitLocation(item_id, zone);
         }, 0);
+    };
+
+    var countItemsInZone = function(zone) {
+        var count = 0;
+        for (var key in state.items) {
+            if (state.items.hasOwnProperty(key)) {
+                if (state.items[key].zone === zone) {
+                    count += 1;
+                }
+            }
+        }
+        return count;
     };
 
     var initDroppable = function() {
@@ -721,6 +741,7 @@ function DragAndDropBlock(runtime, element, configuration) {
                         releaseItem($selectedItem);
                     } else if (isActionKey(evt)) {
                         evt.preventDefault();
+                        evt.stopPropagation();
                         state.keyboard_placement_mode = false;
                         releaseItem($selectedItem);
                         if ($zone.is('.item-bank')) {

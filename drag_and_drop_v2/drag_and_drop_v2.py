@@ -3,6 +3,7 @@
 
 # Imports ###########################################################
 
+from collections import Counter
 import json
 import webob
 import copy
@@ -112,6 +113,13 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         default="",
     )
 
+    max_items_per_zone = Integer(
+        display_name=_("Maximum items per zone"),
+        help=_("This setting limits the number of items that can be dropped into a single zone"),
+        scope=Scope.settings,
+        default=None
+    )
+
     data = Dict(
         display_name=_("Problem data"),
         help=_(
@@ -201,6 +209,7 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
             "mode": self.mode,
             "max_attempts": self.max_attempts,
             "zones": self._get_zones(),
+            "max_items_per_zone": self.max_items_per_zone,
             # SDK doesn't supply url_name.
             "url_name": getattr(self, 'url_name', ''),
             "display_zone_labels": self.data.get('displayLabels', False),
@@ -280,6 +289,14 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
 
     @XBlock.json_handler
     def studio_submit(self, submissions, suffix=''):
+        errors = self._validate_submissions(submissions)
+
+        if errors:
+            return {
+                'result': 'failure',
+                'messages': errors
+            }
+
         self.display_name = submissions['display_name']
         self.mode = submissions['mode']
         self.max_attempts = submissions['max_attempts']
@@ -289,11 +306,40 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         self.weight = float(submissions['weight'])
         self.item_background_color = submissions['item_background_color']
         self.item_text_color = submissions['item_text_color']
+        self.max_items_per_zone = submissions['max_items_per_zone']
         self.data = submissions['data']
 
         return {
             'result': 'success',
         }
+
+    @staticmethod
+    def _validate_submissions(submissions):
+        """
+        Validates that submissions passed are correct
+        """
+        errors = []
+
+        items = submissions['data']['items']
+        max_submissions = int(submissions['max_items_per_zone'])
+
+        if max_submissions:
+            counter = Counter()
+            for item in items:
+                zones = item.get('zones', [item.get('zone')])
+                for zone in zones:
+                    if zone and zone != 'none':
+                        counter[zone] += 1
+
+            for zone_id, count in counter.iteritems():
+                if count > max_submissions:
+                    errors.append(
+                        _('Zone {zone_id} has more items than "Max items per zone" - please check settings').format(
+                            zone_id=zone_id
+                        )
+                    )
+
+        return errors
 
     @XBlock.json_handler
     def do_attempt(self, attempt, suffix=''):
