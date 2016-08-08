@@ -37,6 +37,7 @@ DEFAULT_DATA = {
       "y": 30,
       "width": 196,
       "height": 178,
+      "align": "center"
     },
     {
       "uid": MIDDLE_ZONE_ID,
@@ -46,6 +47,8 @@ DEFAULT_DATA = {
       "y": 210,
       "width": 340,
       "height": 138,
+      "align": "center"
+
     },
     {
       "uid": BOTTOM_ZONE_ID,
@@ -55,6 +58,7 @@ DEFAULT_DATA = {
       "y": 350,
       "width": 485,
       "height": 135,
+      "align": "center"
     }
   ],
   "items": [

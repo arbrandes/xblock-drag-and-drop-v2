@@ -290,8 +290,8 @@ class TestDragAndDropRenderZoneAlign(BaseIntegrationTest):
 
     def test_zone_align(self):
         expected_alignments = {
-            "#-Zone_No_Align": "start",
-            "#-Zone_Invalid_Align": "start",
+            "#-Zone_No_Align": "center",
+            "#-Zone_Invalid_Align": "center",
             "#-Zone_Left_Align": "left",
             "#-Zone_Right_Align": "right",
             "#-Zone_Center_Align": "center"

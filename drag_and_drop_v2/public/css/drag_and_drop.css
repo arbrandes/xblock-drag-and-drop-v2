@@ -169,6 +169,8 @@
 }
 .xblock--drag-and-drop .zone .item-align-center {
     text-align: center;
+    padding-left: 2px;
+    padding-right: 2px;
 }
 .xblock--drag-and-drop .zone .item-align-center .option {
     display: block;

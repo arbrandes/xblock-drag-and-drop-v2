@@ -837,28 +837,9 @@ class ZoneAlignInteractionTest(InteractionTestBase, BaseIntegrationTest):
         else:
             self.assertEquals(self._get_style(zone_item_selector, 'display'), 'inline-block')
 
-    def test_no_zone_align(self):
-        """
-        Test items placed in a zone with no align setting.
-        Ensure that they are children of div.target, not the zone.
-        """
-        zone_id = "Zone No Align"
-        self.place_item(0, zone_id)
-        zone_item_selector = "div[data-uid='{zone_id}'] .item-wrapper .option".format(zone_id=zone_id)
-        self.assertEquals(len(self._page.find_elements_by_css_selector(zone_item_selector)), 0)
-
-        target_item_selector = '.target > .option'
-        placed_items = self._page.find_elements_by_css_selector(target_item_selector)
-        self.assertEquals(len(placed_items), 1)
-        self.assertEquals(placed_items[0].get_attribute('data-value'), '0')
-
-        # Non-aligned items are absolute positioned, with top/bottom set to px
-        self.assertEquals(self._get_style(target_item_selector, 'position'), 'absolute')
-        self.assertRegexpMatches(self._get_style(target_item_selector, 'left'), r'^\d+(\.\d+)?px$')
-        self.assertRegexpMatches(self._get_style(target_item_selector, 'top'), r'^\d+(\.\d+)?px$')
-
     @data(
-        ([3, 4, 5], "Zone Invalid Align", "start"),
+        ([0, 1, 2], "Zone No Align", "center"),
+        ([3, 4, 5], "Zone Invalid Align", "center"),
         ([6, 7, 8], "Zone Left Align", "left"),
         ([9, 10, 11], "Zone Right Align", "right"),
         ([12, 13, 14], "Zone Center Align", "center"),

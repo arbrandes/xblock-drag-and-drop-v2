@@ -35,6 +35,8 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
     STANDARD_MODE = "standard"
     ASSESSMENT_MODE = "assessment"
 
+    ALLOWED_ZONE_ALIGNMENT = ['left', 'right', 'center']
+
     display_name = String(
         display_name=_("Title"),
         help=_("The title of the drag and drop problem. The title is displayed to learners."),
@@ -308,9 +310,7 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
             feedback = item['feedback']['correct']
             state = {
                 'zone': attempt['zone'],
-                'correct': True,
-                'x_percent': attempt['x_percent'],
-                'y_percent': attempt['y_percent'],
+                'correct': True
             }
 
         if state:
@@ -488,16 +488,22 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         Get drop zone data, defined by the author.
         """
         # Convert zone data from old to new format if necessary
-        zones = []
-        for zone in self.data.get('zones', []):
-            zone = zone.copy()
-            if "uid" not in zone:
-                zone["uid"] = zone.get("title")  # Older versions used title as the zone UID
-            # Remove old, now-unused zone attributes, if present:
-            zone.pop("id", None)
-            zone.pop("index", None)
-            zones.append(zone)
-        return zones
+        return [self._update_zone_format(zone) for zone in self.data.get('zones', [])]
+
+    def _update_zone_format(self, initial_zone):
+        """
+        Modifies zone data to be consistent with latest format.
+        """
+        zone = initial_zone.copy()
+        if "uid" not in zone:
+            zone["uid"] = zone.get("title")  # Older versions used title as the zone UID
+        # Remove old, now-unused zone attributes, if present:
+        zone.pop("id", None)
+        zone.pop("index", None)
+
+        if zone.get('align', None) not in self.ALLOWED_ZONE_ALIGNMENT:
+            zone['align'] = 'center'
+        return zone
 
     def _get_zone_by_uid(self, uid):
         """
