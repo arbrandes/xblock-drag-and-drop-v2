@@ -178,6 +178,16 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         self.assertEqual(self.block.max_items_per_zone, 4)
         self.assertEqual(self.block.data, {'foo': 2, 'items': [{'zone': '1', 'title': 'qwe'}]})
 
+    def test_studio_submit_empty_max_items(self):
+        def update_submission(submission):
+            submission['max_items_per_zone'] = ''
+
+        body = self._make_submission(update_submission)
+        res = self.call_handler('studio_submit', body)
+        self.assertEqual(res, {'result': 'success'})
+
+        self.assertIsNone(self.block.max_items_per_zone)
+
     def test_studio_submit_max_items_validation(self):
         def submission_success(submission):
             submission['max_items_per_zone'] = 1

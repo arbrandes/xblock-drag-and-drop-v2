@@ -5,6 +5,7 @@
 
 from collections import Counter
 import json
+import logging
 import webob
 import copy
 import urllib
@@ -23,9 +24,10 @@ from .default_data import DEFAULT_DATA
 # Globals ###########################################################
 
 loader = ResourceLoader(__name__)
-
+logger = logging.getLogger(__name__)
 
 # Classes ###########################################################
+
 
 @XBlock.wants('settings')
 @XBlock.needs('i18n')
@@ -304,7 +306,8 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         self.weight = float(submissions['weight'])
         self.item_background_color = submissions['item_background_color']
         self.item_text_color = submissions['item_text_color']
-        self.max_items_per_zone = submissions.get('max_items_per_zone', None)
+        # Possible ValueError should be catched in _validate_submissions
+        self.max_items_per_zone = self._get_max_items(submissions)
         self.data = submissions['data']
 
         return {
@@ -312,14 +315,32 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         }
 
     @staticmethod
-    def _validate_submissions(submissions):
+    def _get_max_items(submission):
+        """
+        Parses Max items per zone value coming from editor.
+
+        Does not catch ValueError intentionally to allow validation to capture this problem
+        """
+        raw_max_submissions = submission.get('max_items_per_zone', None)
+        if not raw_max_submissions:
+            return None
+        else:
+            return int(raw_max_submissions)
+
+    def _validate_submissions(self, submissions):
         """
         Validates that submissions passed are correct
         """
         errors = []
 
         items = submissions['data']['items']
-        max_submissions = int(submissions.get('max_items_per_zone', 0))
+
+        max_submissions = 0
+        try:
+            max_submissions = self._get_max_items(submissions)
+        except ValueError as exc:
+            errors.append(_('Failed to parse "Max items per zone" - please check settings'))
+            logger.exception(exc)
 
         if max_submissions:
             counter = Counter()
