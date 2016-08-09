@@ -15,6 +15,29 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         self.block = make_block()
         self.patch_workbench()
 
+    def _make_submission(self, modify_submitssion=None):
+        modify = modify_submitssion if modify_submitssion else lambda x: x
+
+        submission = {
+            'display_name': "Test Drag & Drop",
+            'mode': DragAndDropBlock.STANDARD_MODE,
+            'max_attempts': 1,
+            'show_title': False,
+            'problem_text': "Problem Drag & Drop",
+            'show_problem_header': False,
+            'item_background_color': 'cornflowerblue',
+            'item_text_color': 'coral',
+            'weight': '5',
+            'data': {
+                'foo': 1,
+                'items': []
+            },
+        }
+
+        modify(submission)
+
+        return submission
+
     def test_template_contents(self):
         context = {}
         student_fragment = self.block.runtime.render(self.block, 'student_view', context)
@@ -111,21 +134,7 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         assert_user_state_empty()
 
     def test_studio_submit(self):
-        body = {
-            'display_name': "Test Drag & Drop",
-            'mode': DragAndDropBlock.STANDARD_MODE,
-            'max_attempts': 1,
-            'show_title': False,
-            'problem_text': "Problem Drag & Drop",
-            'show_problem_header': False,
-            'item_background_color': 'cornflowerblue',
-            'item_text_color': 'coral',
-            'weight': '5',
-            'data': {
-                'foo': 1,
-                'items': []
-            },
-        }
+        body = self._make_submission()
         res = self.call_handler('studio_submit', body)
         self.assertEqual(res, {'result': 'success'})
 
@@ -142,22 +151,18 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         self.assertEqual(self.block.data, {'foo': 1, 'items': []})
 
     def test_studio_submit2(self):
-        body = {
-            'display_name': "Test Drag & Drop",
-            'mode': DragAndDropBlock.ASSESSMENT_MODE,
-            'max_attempts': 12,
-            'max_items_per_zone': 4,
-            'show_title': True,
-            'problem_text': "Problem Drag & Drop",
-            'show_problem_header': True,
-            'item_background_color': 'cornflowerblue',
-            'item_text_color': 'red',
-            'weight': '5',
-            'data': {
-                'foo': 2,
-                'items': [{'zone': '1', 'title': 'qwe'}]
-            },
-        }
+        def update_submission(submission):
+            submission.update({
+                'mode': DragAndDropBlock.ASSESSMENT_MODE,
+                'max_items_per_zone': 4,
+                'show_problem_header': True,
+                'show_title': True,
+                'max_attempts': 12,
+                'item_text_color': 'red',
+                'data': {'foo': 2, 'items': [{'zone': '1', 'title': 'qwe'}]},
+            })
+
+        body = self._make_submission(update_submission)
         res = self.call_handler('studio_submit', body)
         self.assertEqual(res, {'result': 'success'})
 
@@ -172,6 +177,48 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         self.assertEqual(self.block.weight, 5)
         self.assertEqual(self.block.max_items_per_zone, 4)
         self.assertEqual(self.block.data, {'foo': 2, 'items': [{'zone': '1', 'title': 'qwe'}]})
+
+    def test_studio_submit_max_items_validation(self):
+        def submission_success(submission):
+            submission['max_items_per_zone'] = 1
+            submission['data']['items'] = [{'zone': '1', 'title': 'item 1'}, {'zone': '2', 'title': 'item 2'}]
+
+        def submission_failure(submission):
+            submission['max_items_per_zone'] = 1
+            submission['data']['items'] = [{'zone': 'Zone 1', 'title': 'item 1'}, {'zone': 'Zone 1', 'title': 'item 2'}]
+
+        def submission_success2(submission):
+            submission['max_items_per_zone'] = 2
+            submission['data']['items'] = [
+                {'zone': 'Zone 1', 'title': 'item 1'},
+                {'zone': 'Zone 1', 'title': 'item 2'}
+            ]
+
+        def submission_failure2(submission):
+            submission['max_items_per_zone'] = 1
+            submission['data']['items'] = [
+                {'zone': 'Zone 2', 'title': 'item 1'},
+                {'zone': 'Zone 2', 'title': 'item 2'},
+                {'zone': 'Zone 3', 'title': 'item 3'},
+                {'zone': 'Zone 3', 'title': 'item 4'},
+            ]
+
+        res = self.call_handler('studio_submit', self._make_submission(submission_success))
+        self.assertEqual(res, {'result': 'success'})
+
+        res = self.call_handler('studio_submit', self._make_submission(submission_success2))
+        self.assertEqual(res, {'result': 'success'})
+
+        res = self.call_handler('studio_submit', self._make_submission(submission_failure))
+        self.assertEqual(res['result'], 'failure')
+        self.assertEqual(len(res['messages']), 1)
+        self.assertIn("Zone 1", res['messages'][0])
+
+        res = self.call_handler('studio_submit', self._make_submission(submission_failure2))
+        self.assertEqual(res['result'], 'failure')
+        self.assertEqual(len(res['messages']), 2)
+        self.assertIn("Zone 2", res['messages'][0])
+        self.assertIn("Zone 3", res['messages'][1])
 
     def test_expand_static_url(self):
         """ Test the expand_static_url handler needed in Studio when changing the image """
