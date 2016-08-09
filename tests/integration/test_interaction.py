@@ -241,6 +241,13 @@ class InteractionTestBase(object):
                 self.assertNotDraggable(item_key)
                 self.assertEqual(item.get_attribute('class'), 'option fade')
 
+    def _switch_to_block(self, idx):
+        """ Only needed if there are multiple blocks on the page. """
+        self._page = self.browser.find_elements_by_css_selector(self.default_css_selector)[idx]
+        self.scroll_down(0)
+
+
+class ParameterizedTestsMixin(object):
     def parameterized_item_positive_feedback_on_good_move(
             self, items_map, scroll_down=100, action_key=None, assessment_mode=False
     ):
@@ -421,11 +428,6 @@ class InteractionTestBase(object):
             self.assertFalse(dialog_modal_overlay.is_displayed())
             self.assertFalse(dialog_modal.is_displayed())
 
-    def _switch_to_block(self, idx):
-        """ Only needed if ther eare multiple blocks on the page. """
-        self._page = self.browser.find_elements_by_css_selector(self.default_css_selector)[idx]
-        self.scroll_down(0)
-
 
 class DefaultDataTestMixin(object):
     """
@@ -482,7 +484,7 @@ class DefaultAssessmentDataTestMixin(DefaultDataTestMixin):
 
 
 @ddt
-class StandardInteractionTest(DefaultDataTestMixin, InteractionTestBase, BaseIntegrationTest):
+class StandardInteractionTest(DefaultDataTestMixin, InteractionTestBase, ParameterizedTestsMixin, BaseIntegrationTest):
     """
     Testing interactions with Drag and Drop XBlock against default data.
     All interactions are tested using mouse (action_key=None) and four different keyboard action keys.
@@ -512,7 +514,9 @@ class StandardInteractionTest(DefaultDataTestMixin, InteractionTestBase, BaseInt
 
 
 @ddt
-class AssessmentInteractionTest(DefaultAssessmentDataTestMixin, InteractionTestBase, BaseIntegrationTest):
+class AssessmentInteractionTest(
+    DefaultAssessmentDataTestMixin, InteractionTestBase, ParameterizedTestsMixin, BaseIntegrationTest
+):
     """
     Testing interactions with Drag and Drop XBlock against default data in assessment mode.
     All interactions are tested using mouse (action_key=None) and four different keyboard action keys.
@@ -588,7 +592,7 @@ class MultipleValidOptionsInteractionTest(DefaultDataTestMixin, InteractionTestB
 
 
 @ddt
-class EventsFiredTest(DefaultDataTestMixin, InteractionTestBase, BaseIntegrationTest):
+class EventsFiredTest(DefaultDataTestMixin, ParameterizedTestsMixin, InteractionTestBase, BaseIntegrationTest):
     """
     Tests that the analytics events are fired and in the proper order.
     """
@@ -718,7 +722,7 @@ class CustomHtmlDataInteractionTest(StandardInteractionTest):
         return self._get_custom_scenario_xml("data/test_html_data.json")
 
 
-class MultipleBlocksDataInteraction(InteractionTestBase, BaseIntegrationTest):
+class MultipleBlocksDataInteraction(ParameterizedTestsMixin, InteractionTestBase, BaseIntegrationTest):
     PAGE_TITLE = 'Drag and Drop v2 Multiple Blocks'
     PAGE_ID = 'drag_and_drop_v2_multi'
 
@@ -854,3 +858,55 @@ class ZoneAlignInteractionTest(InteractionTestBase, BaseIntegrationTest):
                 self.scroll_down(pixels=200)
                 reset.click()
                 self.scroll_down(pixels=0)
+
+
+class TestMaxItemsPerZone(InteractionTestBase, BaseIntegrationTest):
+    """
+    Tests for max items per dropzone feature
+    """
+    PAGE_TITLE = 'Drag and Drop v2'
+    PAGE_ID = 'drag_and_drop_v2'
+
+    def _get_scenario_xml(self):
+        data = loader.load_unicode("data/test_zone_align.json")
+        return self._make_scenario_xml(data=data, max_items_per_zone=2)
+
+    def test_item_returned_to_bank(self):
+        """
+        Tests that an item is returned to bank if max items per zone reached
+        """
+        zone_id = "Zone No Align"
+        self.place_item(0, zone_id)
+        self.place_item(1, zone_id)
+
+        # precondition check - max items placed into zone
+        self.assert_placed_item(0, zone_id)
+        self.assert_placed_item(1, zone_id)
+
+        self.place_item(2, zone_id)
+
+        self.assert_reverted_item(2)
+        feedback_popup_content = self._get_popup_content()
+        self.assertEqual(
+            feedback_popup_content.get_attribute('innerHTML'),
+            "This zone already contains maximum allowed number of items or more"
+        )
+
+    def test_item_returned_t_bank_after_refresh(self):
+        zone_id = "Zone Left Align"
+        self.place_item(6, zone_id)
+        self.place_item(7, zone_id)
+
+        # precondition check - max items placed into zone
+        self.assert_placed_item(6, zone_id)
+        self.assert_placed_item(7, zone_id)
+
+        self.place_item(8, zone_id)
+
+        self.assert_reverted_item(8)
+
+        self._page = self.go_to_page(self.PAGE_TITLE)  # refresh the page
+
+        self.assert_placed_item(6, zone_id)
+        self.assert_placed_item(7, zone_id)
+        self.assert_reverted_item(8)
