@@ -1057,15 +1057,7 @@ function DragAndDropBlock(runtime, element, configuration) {
      * which is not known in Python-land.
      */
     var migrateState = function() {
-        var outdated_properties = ['x_percent', 'y_percent', 'left', 'top', 'absolute'];
-        Object.keys(state.items).forEach(function(item_id) {
-            var item = state.items[item_id];
-            outdated_properties.forEach(function(property_name) {
-                if (item.hasOwnProperty(property_name)) {
-                    delete item[property_name];
-                }
-            });
-        });
+
     };
 
     /**
