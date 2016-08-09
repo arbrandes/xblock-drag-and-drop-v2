@@ -306,7 +306,7 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         self.weight = float(submissions['weight'])
         self.item_background_color = submissions['item_background_color']
         self.item_text_color = submissions['item_text_color']
-        self.max_items_per_zone = submissions['max_items_per_zone']
+        self.max_items_per_zone = submissions.get('max_items_per_zone', None)
         self.data = submissions['data']
 
         return {
@@ -321,7 +321,7 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         errors = []
 
         items = submissions['data']['items']
-        max_submissions = int(submissions['max_items_per_zone'])
+        max_submissions = int(submissions.get('max_items_per_zone', 0))
 
         if max_submissions:
             counter = Counter()

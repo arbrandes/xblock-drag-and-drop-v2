@@ -37,6 +37,7 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
             "title": "Drag and Drop",
             "show_title": True,
             "problem_text": "",
+            "max_items_per_zone": None,
             "show_problem_header": True,
             "target_img_expanded_url": '/expanded/url/to/drag_and_drop_v2/public/img/triangle.png',
             "target_img_description": TARGET_IMG_DESCRIPTION,
@@ -75,29 +76,29 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         assert_user_state_empty()
 
         # Drag three items into the correct spot:
-        data = {"val": 0, "zone": TOP_ZONE_ID, "x_percent": "33%", "y_percent": "11%"}
+        data = {"val": 0, "zone": TOP_ZONE_ID}
         self.call_handler('do_attempt', data)
-        data = {"val": 1, "zone": MIDDLE_ZONE_ID, "x_percent": "67%", "y_percent": "80%"}
+        data = {"val": 1, "zone": MIDDLE_ZONE_ID}
         self.call_handler('do_attempt', data)
-        data = {"val": 2, "zone": BOTTOM_ZONE_ID, "x_percent": "99%", "y_percent": "95%"}
+        data = {"val": 2, "zone": BOTTOM_ZONE_ID}
         self.call_handler('do_attempt', data)
-        data = {"val": 3, "zone": MIDDLE_ZONE_ID, "x_percent": "67%", "y_percent": "80%"}
+        data = {"val": 3, "zone": MIDDLE_ZONE_ID}
         self.call_handler('do_attempt', data)
 
         # Check the result:
         self.assertTrue(self.block.completed)
         self.assertEqual(self.block.item_state, {
-            '0': {'x_percent': '33%', 'y_percent': '11%', 'correct': True, 'zone': TOP_ZONE_ID},
-            '1': {'x_percent': '67%', 'y_percent': '80%', 'correct': True, 'zone': MIDDLE_ZONE_ID},
-            '2': {'x_percent': '99%', 'y_percent': '95%', 'correct': True, 'zone': BOTTOM_ZONE_ID},
-            '3': {'x_percent': '67%', 'y_percent': '80%', 'correct': True, "zone": MIDDLE_ZONE_ID},
+            '0': {'correct': True, 'zone': TOP_ZONE_ID},
+            '1': {'correct': True, 'zone': MIDDLE_ZONE_ID},
+            '2': {'correct': True, 'zone': BOTTOM_ZONE_ID},
+            '3': {'correct': True, "zone": MIDDLE_ZONE_ID},
         })
         self.assertEqual(self.call_handler('get_user_state'), {
             'items': {
-                '0': {'x_percent': '33%', 'y_percent': '11%', 'correct': True, 'zone': TOP_ZONE_ID},
-                '1': {'x_percent': '67%', 'y_percent': '80%', 'correct': True, 'zone': MIDDLE_ZONE_ID},
-                '2': {'x_percent': '99%', 'y_percent': '95%', 'correct': True, 'zone': BOTTOM_ZONE_ID},
-                '3': {'x_percent': '67%', 'y_percent': '80%', 'correct': True, "zone": MIDDLE_ZONE_ID},
+                '0': {'correct': True, 'zone': TOP_ZONE_ID},
+                '1': {'correct': True, 'zone': MIDDLE_ZONE_ID},
+                '2': {'correct': True, 'zone': BOTTOM_ZONE_ID},
+                '3': {'correct': True, "zone": MIDDLE_ZONE_ID},
             },
             'finished': True,
             "num_attempts": 0,
@@ -112,7 +113,7 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
     def test_studio_submit(self):
         body = {
             'display_name': "Test Drag & Drop",
-            'mode': DragAndDropBlock.ASSESSMENT_MODE,
+            'mode': DragAndDropBlock.STANDARD_MODE,
             'max_attempts': 1,
             'show_title': False,
             'problem_text': "Problem Drag & Drop",
@@ -121,14 +122,15 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
             'item_text_color': 'coral',
             'weight': '5',
             'data': {
-                'foo': 1
+                'foo': 1,
+                'items': []
             },
         }
         res = self.call_handler('studio_submit', body)
         self.assertEqual(res, {'result': 'success'})
 
         self.assertEqual(self.block.show_title, False)
-        self.assertEqual(self.block.mode, DragAndDropBlock.ASSESSMENT_MODE)
+        self.assertEqual(self.block.mode, DragAndDropBlock.STANDARD_MODE)
         self.assertEqual(self.block.max_attempts, 1)
         self.assertEqual(self.block.display_name, "Test Drag & Drop")
         self.assertEqual(self.block.question_text, "Problem Drag & Drop")
@@ -136,7 +138,40 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         self.assertEqual(self.block.item_background_color, "cornflowerblue")
         self.assertEqual(self.block.item_text_color, "coral")
         self.assertEqual(self.block.weight, 5)
-        self.assertEqual(self.block.data, {'foo': 1})
+        self.assertEqual(self.block.max_items_per_zone, None)
+        self.assertEqual(self.block.data, {'foo': 1, 'items': []})
+
+    def test_studio_submit2(self):
+        body = {
+            'display_name': "Test Drag & Drop",
+            'mode': DragAndDropBlock.ASSESSMENT_MODE,
+            'max_attempts': 12,
+            'max_items_per_zone': 4,
+            'show_title': True,
+            'problem_text': "Problem Drag & Drop",
+            'show_problem_header': True,
+            'item_background_color': 'cornflowerblue',
+            'item_text_color': 'red',
+            'weight': '5',
+            'data': {
+                'foo': 2,
+                'items': [{'zone': '1', 'title': 'qwe'}]
+            },
+        }
+        res = self.call_handler('studio_submit', body)
+        self.assertEqual(res, {'result': 'success'})
+
+        self.assertEqual(self.block.show_title, True)
+        self.assertEqual(self.block.mode, DragAndDropBlock.ASSESSMENT_MODE)
+        self.assertEqual(self.block.max_attempts, 12)
+        self.assertEqual(self.block.display_name, "Test Drag & Drop")
+        self.assertEqual(self.block.question_text, "Problem Drag & Drop")
+        self.assertEqual(self.block.show_question_header, True)
+        self.assertEqual(self.block.item_background_color, "cornflowerblue")
+        self.assertEqual(self.block.item_text_color, "red")
+        self.assertEqual(self.block.weight, 5)
+        self.assertEqual(self.block.max_items_per_zone, 4)
+        self.assertEqual(self.block.data, {'foo': 2, 'items': [{'zone': '1', 'title': 'qwe'}]})
 
     def test_expand_static_url(self):
         """ Test the expand_static_url handler needed in Studio when changing the image """

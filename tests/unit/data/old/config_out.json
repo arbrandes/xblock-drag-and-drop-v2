@@ -13,6 +13,7 @@
     "display_zone_borders": false,
     "display_zone_labels": false,
     "url_name": "",
+    "max_items_per_zone": null,
 
     "zones": [
         {
