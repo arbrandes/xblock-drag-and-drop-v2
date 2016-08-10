@@ -892,7 +892,7 @@ class TestMaxItemsPerZone(InteractionTestBase, BaseIntegrationTest):
             "This zone already contains maximum allowed number of items or more"
         )
 
-    def test_item_returned_t_bank_after_refresh(self):
+    def test_item_returned_to_bank_after_refresh(self):
         zone_id = "Zone Left Align"
         self.place_item(6, zone_id)
         self.place_item(7, zone_id)
