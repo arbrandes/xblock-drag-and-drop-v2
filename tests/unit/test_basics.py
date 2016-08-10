@@ -17,7 +17,8 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         self.block = make_block()
         self.patch_workbench()
 
-    def _make_submission(self, modify_submission=None):
+    @staticmethod
+    def _make_submission(modify_submission=None):
         modify = modify_submission if modify_submission else lambda x: x
 
         submission = {

@@ -868,8 +868,8 @@ class TestMaxItemsPerZone(InteractionTestBase, BaseIntegrationTest):
     PAGE_ID = 'drag_and_drop_v2'
 
     def _get_scenario_xml(self):
-        data = loader.load_unicode("data/test_zone_align.json")
-        return self._make_scenario_xml(data=data, max_items_per_zone=2)
+        scenario_data = loader.load_unicode("data/test_zone_align.json")
+        return self._make_scenario_xml(data=scenario_data, max_items_per_zone=2)
 
     def test_item_returned_to_bank(self):
         """
