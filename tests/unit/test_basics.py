@@ -1,3 +1,4 @@
+import ddt
 import unittest
 
 from drag_and_drop_v2.drag_and_drop_v2 import DragAndDropBlock
@@ -8,6 +9,7 @@ from drag_and_drop_v2.default_data import (
 from ..utils import make_block, TestCaseMixin
 
 
+@ddt.ddt
 class BasicTests(TestCaseMixin, unittest.TestCase):
     """ Basic unit tests for the Drag and Drop block, using its default settings """
 
@@ -187,6 +189,16 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         self.assertEqual(res, {'result': 'success'})
 
         self.assertIsNone(self.block.max_items_per_zone)
+
+    @ddt.data(-1, -5, -100, -1e15)
+    def test_studio_submit_max_items_negative(self, max_items_per_zone):
+        def modify_submission(submission):
+            submission['max_items_per_zone'] = max_items_per_zone
+
+        res = self.call_handler('studio_submit', self._make_submission(modify_submission))
+        self.assertEqual(res['result'], 'failure')
+        self.assertEqual(len(res['messages']), 1)
+        self.assertIn('should be positive', res['messages'][0])
 
     def test_studio_submit_max_items_validation(self):
         def submission_success(submission):

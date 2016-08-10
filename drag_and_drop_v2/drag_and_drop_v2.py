@@ -335,27 +335,39 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
 
         items = submissions['data']['items']
 
-        max_items_per_zone = 0
         try:
             max_items_per_zone = self._get_max_items_per_zone(submissions)
         except ValueError as exc:
             errors.append(_('Failed to parse "Max items per zone" - please check settings'))
             logger.exception(exc)
+            return errors
 
         if max_items_per_zone:
-            counter = Counter()
-            for item in items:
-                for zone in item.get('zones', []):
-                    if zone and zone != 'none':
-                        counter[zone] += 1
+            if max_items_per_zone < 0:
+                errors.append(_('"Max items per zone" should be positive, got {max_items_per_zone}').format(
+                    max_items_per_zone=max_items_per_zone
+                ))
+            else:
+                errors.extend(self._validate_item_zones(items, max_items_per_zone))
 
-            for zone_id, count in counter.iteritems():
-                if count > max_items_per_zone:
-                    errors.append(
-                        _('Zone {zone_id} has more items than "Max items per zone" - please check settings').format(
-                            zone_id=zone_id
-                        )
+        return errors
+
+    @staticmethod
+    def _validate_item_zones(items, max_items_per_zone):
+        errors = []
+        counter = Counter()
+        for item in items:
+            for zone in item.get('zones', []):
+                if zone and zone != 'none':
+                    counter[zone] += 1
+
+        for zone_id, count in counter.iteritems():
+            if count > max_items_per_zone:
+                errors.append(
+                    _('Zone {zone_id} has more items than "Max items per zone" - please check settings').format(
+                        zone_id=zone_id
                     )
+                )
 
         return errors
 
