@@ -15,8 +15,8 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         self.block = make_block()
         self.patch_workbench()
 
-    def _make_submission(self, modify_submitssion=None):
-        modify = modify_submitssion if modify_submitssion else lambda x: x
+    def _make_submission(self, modify_submission=None):
+        modify = modify_submission if modify_submission else lambda x: x
 
         submission = {
             'display_name': "Test Drag & Drop",
@@ -150,7 +150,7 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         self.assertEqual(self.block.max_items_per_zone, None)
         self.assertEqual(self.block.data, {'foo': 1, 'items': []})
 
-    def test_studio_submit2(self):
+    def test_studio_submit_assessment(self):
         def update_submission(submission):
             submission.update({
                 'mode': DragAndDropBlock.ASSESSMENT_MODE,
@@ -191,26 +191,30 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
     def test_studio_submit_max_items_validation(self):
         def submission_success(submission):
             submission['max_items_per_zone'] = 1
-            submission['data']['items'] = [{'zone': '1', 'title': 'item 1'}, {'zone': '2', 'title': 'item 2'}]
+            submission['data']['items'] = [
+                {'zones': ['1'], 'title': 'item 1'}, {'zones': ['2'], 'title': 'item 2'}
+            ]
 
         def submission_failure(submission):
             submission['max_items_per_zone'] = 1
-            submission['data']['items'] = [{'zone': 'Zone 1', 'title': 'item 1'}, {'zone': 'Zone 1', 'title': 'item 2'}]
+            submission['data']['items'] = [
+                {'zones': ['Zone 1'], 'title': 'item 1'}, {'zones': ['Zone 1'], 'title': 'item 2'}
+            ]
 
         def submission_success2(submission):
             submission['max_items_per_zone'] = 2
             submission['data']['items'] = [
-                {'zone': 'Zone 1', 'title': 'item 1'},
-                {'zone': 'Zone 1', 'title': 'item 2'}
+                {'zones': ['Zone 1'], 'title': 'item 1'},
+                {'zones': ['Zone 1'], 'title': 'item 2'}
             ]
 
         def submission_failure2(submission):
             submission['max_items_per_zone'] = 1
             submission['data']['items'] = [
-                {'zone': 'Zone 2', 'title': 'item 1'},
-                {'zone': 'Zone 2', 'title': 'item 2'},
-                {'zone': 'Zone 3', 'title': 'item 3'},
-                {'zone': 'Zone 3', 'title': 'item 4'},
+                {'zones': ['Zone 2'], 'title': 'item 1'},
+                {'zones': ['Zone 2'], 'title': 'item 2'},
+                {'zones': ['Zone 3'], 'title': 'item 3'},
+                {'zones': ['Zone 3'], 'title': 'item 4'},
             ]
 
         res = self.call_handler('studio_submit', self._make_submission(submission_success))

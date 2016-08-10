@@ -521,9 +521,6 @@ function DragAndDropEditBlock(runtime, element, params) {
                         $('.xblock-editor-error-message', element).html();
                         $('.xblock-editor-error-message', element).css('display', 'none');
                         var handlerUrl = runtime.handlerUrl(element, 'studio_submit');
-
-                        $('.xblock-editor-error-message', element).css('display', 'none');
-                        $('.xblock-editor-error-message', element).empty();
                         $.post(handlerUrl, JSON.stringify(data), 'json').done(function(response) {
                             if (response.result === 'success') {
                                 window.location.reload(false);

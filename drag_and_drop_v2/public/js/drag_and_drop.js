@@ -175,12 +175,11 @@ function DragAndDropTemplates(configuration) {
         var className = ctx.display_zone_labels ? 'zone-name' : 'zone-name sr';
         var selector = ctx.display_zone_borders ? 'div.zone.zone-with-borders' : 'div.zone';
         
-        // If zone is aligned, mark its item alignment
-        // and render its placed items as children
-        var item_wrapper = 'div.item-wrapper';
-        item_wrapper += '.item-align.item-align-' + zone.align;
-        var is_item_in_zone = function(i) { return i.is_placed && (i.zone === zone.uid); };
-        var items_in_zone = $.grep(ctx.items, is_item_in_zone);
+        // Mark zone item alignment and render items placed into a zone as children
+        var item_wrapper = 'div.item-wrapper.item-align.item-align-' + zone.align;
+        var items_in_zone = $.grep(ctx.items, function(item) {
+            return item.is_placed && (item.zone === zone.uid);
+        });
 
         return (
             h(
@@ -716,15 +715,9 @@ function DragAndDropBlock(runtime, element, configuration) {
     };
 
     var countItemsInZone = function(zone) {
-        var count = 0;
-        for (var key in state.items) {
-            if (state.items.hasOwnProperty(key)) {
-                if (state.items[key].zone === zone) {
-                    count += 1;
-                }
-            }
-        }
-        return count;
+        return Object.keys(state.items).filter(function(key) {
+            return state.items[key].zone === zone;
+        }).length;
     };
 
     var initDroppable = function() {

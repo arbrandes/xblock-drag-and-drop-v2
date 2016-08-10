@@ -307,7 +307,7 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         self.item_background_color = submissions['item_background_color']
         self.item_text_color = submissions['item_text_color']
         # Possible ValueError should be catched in _validate_submissions
-        self.max_items_per_zone = self._get_max_items(submissions)
+        self.max_items_per_zone = self._get_max_items_per_zone(submissions)
         self.data = submissions['data']
 
         return {
@@ -315,17 +315,17 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
         }
 
     @staticmethod
-    def _get_max_items(submission):
+    def _get_max_items_per_zone(submissions):
         """
         Parses Max items per zone value coming from editor.
 
         Does not catch ValueError intentionally to allow validation to capture this problem
         """
-        raw_max_submissions = submission.get('max_items_per_zone', None)
-        if not raw_max_submissions:
+        raw_max_items_per_zone = submissions.get('max_items_per_zone', None)
+        if not raw_max_items_per_zone:
             return None
         else:
-            return int(raw_max_submissions)
+            return int(raw_max_items_per_zone)
 
     def _validate_submissions(self, submissions):
         """
@@ -335,23 +335,22 @@ class DragAndDropBlock(XBlock, XBlockWithSettingsMixin, ThemableXBlockMixin):
 
         items = submissions['data']['items']
 
-        max_submissions = 0
+        max_items_per_zone = 0
         try:
-            max_submissions = self._get_max_items(submissions)
+            max_items_per_zone = self._get_max_items_per_zone(submissions)
         except ValueError as exc:
             errors.append(_('Failed to parse "Max items per zone" - please check settings'))
             logger.exception(exc)
 
-        if max_submissions:
+        if max_items_per_zone:
             counter = Counter()
             for item in items:
-                zones = item.get('zones', [item.get('zone')])
-                for zone in zones:
+                for zone in item.get('zones', []):
                     if zone and zone != 'none':
                         counter[zone] += 1
 
             for zone_id, count in counter.iteritems():
-                if count > max_submissions:
+                if count > max_items_per_zone:
                     errors.append(
                         _('Zone {zone_id} has more items than "Max items per zone" - please check settings').format(
                             zone_id=zone_id

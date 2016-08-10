@@ -48,7 +48,6 @@ DEFAULT_DATA = {
       "width": 340,
       "height": 138,
       "align": "center"
-
     },
     {
       "uid": BOTTOM_ZONE_ID,
