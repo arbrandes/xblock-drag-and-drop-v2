@@ -165,10 +165,6 @@ function DragAndDropEditBlock(runtime, element, params) {
                                     // $itemTab -> submit
 
                                     e.preventDefault();
-                                    if (!self.validate()) {
-                                        $(e.target).one('click', submitForm);
-                                        return
-                                    }
                                     _fn.build.form.submit();
                                 });
                         });

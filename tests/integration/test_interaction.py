@@ -889,7 +889,7 @@ class TestMaxItemsPerZone(InteractionTestBase, BaseIntegrationTest):
         feedback_popup_content = self._get_popup_content()
         self.assertEqual(
             feedback_popup_content.get_attribute('innerHTML'),
-            "This zone already contains maximum allowed number of items or more"
+            "You cannot add any more items to this zone."
         )
 
     def test_item_returned_to_bank_after_refresh(self):

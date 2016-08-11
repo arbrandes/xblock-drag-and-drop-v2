@@ -697,7 +697,7 @@ function DragAndDropBlock(runtime, element, configuration) {
         var items_in_zone_count = countItemsInZone(zone);
         if (configuration.max_items_per_zone && configuration.max_items_per_zone <= items_in_zone_count) {
             state.last_action_correct = false;
-            state.feedback = gettext("This zone already contains maximum allowed number of items or more");
+            state.feedback = gettext("You cannot add any more items to this zone.");
             applyState();
             return;
         }

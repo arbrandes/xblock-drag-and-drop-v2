@@ -205,7 +205,7 @@ class BasicTests(TestCaseMixin, unittest.TestCase):
         def submission_success(submission):
             submission['max_items_per_zone'] = 1
             submission['data']['items'] = [
-                {'zones': ['1'], 'title': 'item 1'}, {'zones': ['2'], 'title': 'item 2'}
+                {'zones': ['Zone 1'], 'title': 'item 1'}, {'zones': ['Zone 2'], 'title': 'item 2'}
             ]
 
         def submission_failure(submission):
